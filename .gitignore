@@ -1,1 +1,12 @@
+# Ignore the compiled Java code
+target/
+*.class
+
+# Ignore Secrets and Environment Variables
+*.json
 .env
+application.properties
+
+# Ignore IDE files (Optional but recommended)
+.idea/
+*.iml

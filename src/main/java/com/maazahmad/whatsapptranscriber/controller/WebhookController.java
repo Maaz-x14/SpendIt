@@ -2,6 +2,7 @@ package com.maazahmad.whatsapptranscriber.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.maazahmad.whatsapptranscriber.dto.WhatsAppWebhookDto;
+import com.maazahmad.whatsapptranscriber.service.GoogleSheetsService;
 import com.maazahmad.whatsapptranscriber.service.GroqService;
 import com.maazahmad.whatsapptranscriber.service.WhatsAppService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class WebhookController {
     private final WhatsAppService whatsAppService;
     private final GroqService groqService;
     private final ObjectMapper objectMapper;
+    private final GoogleSheetsService googleSheetsService;
 
     // Idempotency cache to prevent duplicate processing
     private final Set<String> processedMessageIds = ConcurrentHashMap.newKeySet();
@@ -90,29 +92,31 @@ public class WebhookController {
     @Async
     public void processAudioAsync(String mediaId, String from) {
         try {
-            // Step 1: Download Audio
+            // Step 1: Download
             System.out.println("Fetching URL for Media ID: " + mediaId);
             String mediaUrl = whatsAppService.getMediaUrl(mediaId);
             byte[] audioData = whatsAppService.downloadFile(mediaUrl);
 
-            // Step 2: Transcribe (Whisper)
-            System.out.println("Transcribing with Groq Whisper...");
+            // Step 2: Transcribe
+            System.out.println("Transcribing...");
             String transcribedText = groqService.transcribe(audioData);
-            System.out.println("Transcription: " + transcribedText);
 
-            // Step 3: Extract Data (Llama 3)
-            System.out.println("Extracting JSON with Groq Llama-3...");
+            // Step 3: Extract Data
+            System.out.println("Extracting JSON...");
             String expenseJson = groqService.extractExpenseData(transcribedText);
-            System.out.println("Extracted Data: " + expenseJson);
 
-            // Step 4: Reply with the Result
-            String replyMessage = "✅ Expense Logged!\n\n" + expenseJson;
+            // Step 4: Log to Google Sheets (THE NEW PART)
+            System.out.println("Logging to Google Sheets...");
+            googleSheetsService.logExpense(expenseJson);
+
+            // Step 5: Reply
+            String replyMessage = "✅ *Expense Saved!* \n\n" + expenseJson;
             whatsAppService.sendReply(from, replyMessage);
 
         } catch (Exception e) {
-            System.err.println("Async processing failed: " + e.getMessage());
+            System.err.println("Processing failed: " + e.getMessage());
             e.printStackTrace();
-            whatsAppService.sendReply(from, "❌ Failed to process expense: " + e.getMessage());
+            whatsAppService.sendReply(from, "❌ Error: " + e.getMessage());
         }
     }
 }

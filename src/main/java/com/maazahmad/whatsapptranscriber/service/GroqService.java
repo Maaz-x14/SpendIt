@@ -72,14 +72,24 @@ public class GroqService {
 
         // System Prompt: Instructs the AI on its role
         String systemPrompt = """
-            You are an AI accountant. Extract expense details from the user's spoken text into JSON.
+            You are an expert AI accountant. Extract expense details into JSON.
+            
+            Current Date Reference: %s
+            
+            CRITICAL INSTRUCTION FOR DATES:
+            - You MUST calculate relative dates based on the Reference Date.
+            - "Yesterday" = Reference Date minus 1 day.
+            - "Last month" = Reference Date minus 1 month.
+            - "On this day last year" = Reference Date minus 1 year.
+            - If no date is mentioned, use the Reference Date.
+            
             Fields required:
             - item (string): What was bought
             - amount (number): The cost
             - currency (string): e.g. USD, PKR, EUR (infer from context or default to PKR)
             - merchant (string): Where it was bought
             - category (string): Food, Transport, Utilities, Office, Entertainment, Other
-            - date (string): YYYY-MM-DD (Assume today is %s if not mentioned)
+            - date (string): YYYY-MM-DD
             
             Return ONLY the valid JSON object. Do not wrap it in markdown blocks.
             """.formatted(LocalDate.now());
