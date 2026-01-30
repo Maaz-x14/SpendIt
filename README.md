@@ -122,3 +122,18 @@ Bot: 🔍 CFO Report 💰 Total: 25,000 PKR 📊 Transactions: 4 📅 Period: 20
 **Budget Alerts:** "Warning: You have exceeded your Food budget."
 
 **Receipt Scanning:** Process image messages using Llama-3 Vision.
+
+
+
+| Feature          | What to Verify       | Success Criteria                                                                 |
+|------------------|----------------------|----------------------------------------------------------------------------------|
+| 1. Logging       | Simple Expense       | Row added with correct Amount & Currency.                                        |
+| 2. Categorization| Strict Categories    | "Pencils" → Office (Not "Stationery"). "Burger" → Food.                          |
+| 3. Dates         | Relative Dates       | "Yesterday" → (Current Date - 1). "Last Month" → 2025-12-01 (Not 2025-12).       |
+| 4. Multi-Currency| Currency Split       | Sheet saves USD vs PKR. Queries show separate totals (e.g., "500 PKR, 20 USD").  |
+| 5. Queries       | Granular Filters     | Asking for "KFC" sums only KFC rows. Asking for "Food" sums all food.            |
+| 6. Edit (Explicit)| Specific Date       | "Update yesterday's lunch" finds exact row from yesterday.                        |
+| 7. Edit (Implicit)| "Last Match" Fix    | "Update lunch" (no date) finds the most recent lunch entry (LIFO logic).         |
+| 8. Undo          | Soft Undo            | "Delete last" removes the very last row added.                                   |
+| 9. Noise         | Irrelevant Audio     | Songs/Greetings are ignored with a polite refusal.                               |
+| 10. Resilience   | Network Retry        | (Hard to force, but ensures system doesn't crash on weak WiFi).                  |

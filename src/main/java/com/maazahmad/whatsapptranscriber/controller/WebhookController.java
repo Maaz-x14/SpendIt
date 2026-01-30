@@ -123,8 +123,21 @@ public class WebhookController {
                     String item = data.path("item").asText();
                     String amount = data.path("amount").asText();
                     String currency = data.path("currency").asText();
-                    String merchant = data.path("merchant").asText();
-                    replyMessage = String.format("✅ *Expense Saved!*\n🛒 %s\n💰 %s %s \n\uD83D\uDCCC %s", item, amount, currency, merchant);
+                    String merchant = data.path("merchant").asText("Unknown");
+                    String date = data.path("date").asText();
+                    String category = data.path("category").asText("Uncategorized");
+
+                    // FORMAT: Bold Header, Clean Data List, Footer
+                    replyMessage = String.format(
+                            "✅ *Expense Saved!*\n" +
+                                    "────────────────\n" +
+                                    "🛒 *Item:* %s\n" +
+                                    "💰 *Cost:* %s %s\n" +
+                                    "📍 *Merchant:* %s\n" +
+                                    "📂 *Category:* %s\n" +
+                                    "📅 *Date:* %s",
+                            item, amount, currency, merchant, category, date
+                    );
                 }
                 case "QUERY_SPENDING" -> {
                     // --- CASE B: ANALYTICS ---
@@ -137,7 +150,11 @@ public class WebhookController {
 
                     System.out.println("Querying: Cat=" + category + ", Merch=" + merchant + ", Item=" + item);
                     String report = googleSheetsService.calculateAnalytics(category, merchant, item, start, end);
-                    replyMessage = "🔍 *CFO Report*\n" + report;
+
+                    // The report from Service is usually raw text, let's wrap it nicely
+                    replyMessage = "🔍 *CFO Analytics Report*\n" +
+                            "────────────────\n" +
+                            report;
                 }
                 case "EDIT_EXPENSE" -> {
                     // --- CASE C: EDIT (Context-Aware) ---
@@ -148,21 +165,30 @@ public class WebhookController {
                     String newCurrency = edit.path("new_currency").asText("PKR");
 
                     System.out.println("Editing: " + targetItem + " on " + targetDate);
-                    replyMessage = googleSheetsService.editExpense(targetItem, targetDate, newAmount, newCurrency);
+
+                    // The service returns a pre-formatted string, but we can add a header
+                    String serviceResponse = googleSheetsService.editExpense(targetItem, targetDate, newAmount, newCurrency);
+                    replyMessage = "✏️ *Update Confirmation*\n" + serviceResponse;
                 }
                 case "UNDO_LAST" -> {
                     // --- CASE D: UNDO ---
                     System.out.println("Undoing last entry...");
-                    replyMessage = googleSheetsService.undoLastLog();
+                    String serviceResponse = googleSheetsService.undoLastLog();
+                    replyMessage = "Undo Action: " + serviceResponse;
                 }
                 case "IRRELEVANT" -> {
                     // --- CASE E: IGNORE ---
                     System.out.println("Intent: IRRELEVANT");
-                    replyMessage = "I only answer expense-related queries.";
+                    replyMessage = "👋 *Hello!*\n\nI am your AI CFO. I can help you with:\n" +
+                            "• Logging expenses 📝\n" +
+                            "• Answering spending questions 📊\n" +
+                            "• Fixing mistakes ✏️\n\n" +
+                            "_Please send me a voice note about your finances._";
                 }
                 default -> {
                     System.out.println("Unknown Intent: " + intent);
-                    replyMessage = "🤔 I wasn't sure what you meant. I can log expenses, answer questions, or fix mistakes.";
+                    replyMessage = "🤔 *I wasn't sure what you meant.*\n\n" +
+                            "Try saying: _\"I spent 500 on lunch\"_ or _\"How much did I spend on food?\"_";
                 }
             }
 
