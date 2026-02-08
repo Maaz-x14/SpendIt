@@ -86,8 +86,17 @@ public class WebhookController {
 
                     if (body != null && body.contains("@")) {
                         processOnboardingAsync(from, body, userOpt);
-                    } else if (body != null && (body.equalsIgnoreCase("hi") || body.equalsIgnoreCase("hello"))) {
-                        // SMART GREETING
+                    } 
+                    // NEW: MANUAL REFRESH COMMAND
+                    else if (body != null && body.equalsIgnoreCase("REFRESH")) {
+                        if (userOpt.isPresent()) {
+                            googleSheetsService.setupHeaders(userOpt.get().getSpreadsheetId());
+                            whatsAppService.sendReply(from, "✅ *Analytics Refresh:* Headers and Analytics tab have been injected into your ledger!");
+                        } else {
+                            whatsAppService.sendReply(from, "❌ You don't have a ledger yet. Send your email to start.");
+                        }
+                    }
+                    else if (body != null && (body.equalsIgnoreCase("hi") || body.equalsIgnoreCase("hello"))) {
                         if (userOpt.isPresent()) {
                             whatsAppService.sendReply(from, "Welcome back! 💸\n\n" +
                                     "Ready to log something? Just send a *voice note*.\n" +
@@ -98,7 +107,7 @@ public class WebhookController {
                                     "📧 Send your *email* to set up your ledger.");
                         }
                     } else {
-                        whatsAppService.sendReply(from, "I'm ready! Send a voice note to log an expense or your email to set up your ledger.");
+                        whatsAppService.sendReply(from, "My bad, I totally fumbled that one. 💀 Could you try saying it again? 🎙️");
                     }
                 }
             }

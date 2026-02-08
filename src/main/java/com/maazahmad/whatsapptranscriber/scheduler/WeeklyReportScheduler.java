@@ -18,7 +18,7 @@ public class WeeklyReportScheduler {
     private final GoogleSheetsService sheetsService;
     private final WhatsAppService whatsAppService;
 
-    @Scheduled(cron = "0 0 21 * * SUN") // Every Sunday at 9 PM
+    @Scheduled(cron = "0 0 21 * * SUN", zone = "Asia/Karachi")
     public void sendWeeklySummaries() {
         List<User> users = userRepository.findAll();
         for (User user : users) {
