@@ -54,15 +54,43 @@ public class GoogleSheetsService {
 
     public void setupHeaders(String spreadsheetId) {
         try {
+            // 1. Setup Main Ledger Headers
             List<Object> headers = List.of("Date", "Item", "Amount", "Currency", "Merchant", "Category");
             ValueRange body = new ValueRange().setValues(List.of(headers));
             sheetsService.spreadsheets().values()
                     .update(spreadsheetId, "Sheet1!A1", body)
                     .setValueInputOption("USER_ENTERED")
                     .execute();
+
+            // 2. Create Analytics Sheet and Inject Formulas
+            createAnalyticsSheet(spreadsheetId);
         } catch (Exception e) {
             System.err.println("Failed to set headers: " + e.getMessage());
         }
+    }
+
+    private void createAnalyticsSheet(String spreadsheetId) throws IOException {
+        // Add a new sheet named "Analytics"
+        com.google.api.services.sheets.v4.model.AddSheetRequest addSheetRequest = new com.google.api.services.sheets.v4.model.AddSheetRequest()
+                .setProperties(new com.google.api.services.sheets.v4.model.SheetProperties().setTitle("Analytics"));
+    
+        com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest batchRequest = new com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest()
+                .setRequests(List.of(new com.google.api.services.sheets.v4.model.Request().setAddSheet(addSheetRequest)));
+    
+        try {
+            sheetsService.spreadsheets().batchUpdate(spreadsheetId, batchRequest).execute();
+        } catch (Exception e) { /* Sheet might already exist */ }
+
+        // Inject Summary Formulas
+        List<List<Object>> analyticsData = List.of(
+            List.of("Category Summary", "Total Spend"),
+            List.of("=QUERY(Sheet1!A:F, \"select F, sum(C) where F is not null group by F label sum(C) ''\", 1)")
+        );
+
+        sheetsService.spreadsheets().values()
+                .update(spreadsheetId, "Analytics!A1", new ValueRange().setValues(analyticsData))
+                .setValueInputOption("USER_ENTERED")
+                .execute();
     }
 
     @SneakyThrows
